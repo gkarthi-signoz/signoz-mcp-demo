@@ -32,6 +32,8 @@ from mcp.client.streamable_http import streamablehttp_client
 from mcp.client.stdio import stdio_client
 from langchain_mcp_adapters.tools import load_mcp_tools
 import logging
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
 
 
 
@@ -68,6 +70,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+FastAPIInstrumentor.instrument_app(app)
 
 # Global variables for agent, tools, and memory
 
@@ -77,7 +80,7 @@ class QueryRequest(BaseModel):
 @app.post("/query")
 async def query_endpoint(request: QueryRequest):
         # print("Initializing tools and agent...")
-    async with streamablehttp_client("http://localhost:8000/mcp") as (read, write, _):
+    async with streamablehttp_client("http://34.201.154.119:8000/mcp") as (read, write, _):
         async with ClientSession(read, write) as session:
             # Initialize the connection
             await session.initialize()
