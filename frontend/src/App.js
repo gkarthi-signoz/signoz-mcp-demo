@@ -17,7 +17,8 @@ function App() {
 
   const handleSend = async () => {
     if (input.trim()) {
-      setMessages([...messages, { sender: 'User', text: input, fadeIn: true }]);
+      const userMessage = input;
+      setMessages([...messages, { sender: 'User', text: userMessage, fadeIn: true }]);
       setInput('');
       setLoading(true); // Set loading to true
 
@@ -27,7 +28,7 @@ function App() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ query: input }),
+          body: JSON.stringify({ query: userMessage }),
         });
 
         const data = await response.json();
@@ -40,72 +41,90 @@ function App() {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <h1>SigNoz MCP Chatbot</h1>
-        <div className="chat-container" style={{ width: '600px' }}>
-          <div
-            className="chat-display"
-            ref={chatDisplayRef} // Attach the ref to the chat display container
-            style={{ overflowY: 'auto', maxHeight: '550px' }} // Ensure scrollable container
-          >
+      <div className="app-container">
+        <header className="app-header">
+          <h1 className="app-title">SigNoz MCP Assistant</h1>
+          <p className="app-subtitle">Your intelligent observability companion</p>
+        </header>
+        
+        <div className="chat-container">
+          <div className="chat-messages" ref={chatDisplayRef}>
+            {messages.length === 0 && (
+              <div className="welcome-message">
+                <h3>Welcome to SigNoz MCP Assistant!</h3>
+                <p>Ask me anything about your observability data, metrics, traces, or logs.</p>
+              </div>
+            )}
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={msg.fadeIn ? 'fade-in' : ''}
-                style={{
-                  color: 'black',
-                  textAlign: msg.sender === 'User' ? 'right' : 'left',
-                  margin: '5px 10px', // Added horizontal margin to move text away from edges
-                  padding: '10px',
-                  backgroundColor: msg.sender === 'User' ? '#e0f7fa' : '#f1f8e9',
-                  borderRadius: '5px',
-                  fontSize: '0.8em', // Smaller font size
-                }}
+                className={`message-wrapper ${msg.sender === 'User' ? 'user-message' : 'agent-message'} ${msg.fadeIn ? 'fade-in' : ''}`}
               >
-                <strong>{msg.sender === 'Bot' ? 'Agent' : msg.sender}:</strong>
-                {msg.sender === 'User' ? (
-                  <div style={{ whiteSpace: 'pre-wrap', marginTop: '14px' }}>{msg.text}</div>
-                ) : (
-                  <ReactMarkdown>{msg.text}</ReactMarkdown>
-                )}
+                <div className="message-bubble">
+                  <div className="message-header">
+                    <span className="message-sender">{msg.sender}</span>
+                  </div>
+                  <div className="message-content">
+                    {msg.sender === 'User' ? (
+                      <div>{msg.text}</div>
+                    ) : (
+                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
             {loading && (
-              <div className="loading-spinner"></div> // Display loading spinner
+              <div className="loading-container">
+                <div className="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <span className="loading-text">Agent is thinking...</span>
+              </div>
             )}
           </div>
-          <div className="chat-input" style={{ display: 'flex', width: '100%', marginTop: '20px' }}> {/* Adjusted styles */}
-            <input
-              type="text"
+          
+          <div className="chat-input-container">
+            <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              style={{ flex: 1, padding: '8px', fontSize: '0.9em' }} // Reduced height input
+              onKeyDown={handleKeyDown}
+              placeholder="Type your message here... (Press Enter to send)"
+              className="chat-input"
+              rows="2"
             />
             <button
               onClick={handleSend}
-              style={{
-                padding: '10px 15px',
-                fontSize: '0.9em',
-                marginLeft: '5px',
-                backgroundColor: '#007BFF',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                transition: 'background-color 0.3s ease',
-              }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = '#0056b3')}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = '#007BFF')}
+              className="send-button"
+              disabled={!input.trim() || loading}
             >
-              Send
+              <svg 
+                className="send-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
             </button>
           </div>
         </div>
-      </header>
+      </div>
     </div>
   );
 }
