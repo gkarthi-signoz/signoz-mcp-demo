@@ -5,7 +5,7 @@ import time
 URL = "http://localhost:8001/query"
 DATA = {"query": "give me services which are active in the last 10 days"}
 NUM_REQUESTS = 100
-REQUESTS_PER_MINUTE = 100  # change this to your desired rate
+REQUESTS_PER_MINUTE = 60  # change this to your desired rate
 
 DELAY_BETWEEN_REQUESTS = 60 / REQUESTS_PER_MINUTE
 

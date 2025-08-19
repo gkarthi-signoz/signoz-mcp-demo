@@ -8,6 +8,7 @@ from langchain_community.document_loaders import TextLoader
 import os
 from dotenv import load_dotenv
 from opentelemetry import trace
+from opentelemetry.propagate import extract, inject
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -20,7 +21,7 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 import requests
 from pydantic import BaseModel, Field
-from fastapi import FastAPI, Request, Query, HTTPException
+from fastapi import FastAPI, Request, Query, HTTPException, Header
 from typing import Optional
 from langchain.chat_models import init_chat_model
 from fastapi.middleware.cors import CORSMiddleware
@@ -57,7 +58,11 @@ trace.set_tracer_provider(provider)
 
 LangChainInstrumentor().instrument()
 
-llm = init_chat_model("gpt-4o-mini", model_provider="openai")
+# Changing model to o3 gives more accurate answer and reduces rate limit
+#llm = init_chat_model("o3", model_provider="openai")
+# gpt-4-turbo
+#gpt-4o
+llm = init_chat_model("gpt-4o", model_provider="openai")
 
 
 # Define a FastAPI app
@@ -78,15 +83,28 @@ class QueryRequest(BaseModel):
     query: str
 
 @app.post("/query")
-async def query_endpoint(request: QueryRequest):
+async def query_endpoint(
+    request: QueryRequest,
+    traceparent: Optional[str] = Header(None)
+):
+    # Extract trace context from traceparent header
+    carrier = {}
+    if traceparent:
+        carrier["traceparent"] = traceparent
+    
+    ctx = extract(carrier)
+    tracer = trace.get_tracer(__name__)
+    
+    with tracer.start_as_current_span("query_endpoint", context=ctx) as span:
         # print("Initializing tools and agent...")
-    async with streamablehttp_client("http://34.201.154.119:8000/mcp") as (read, write, _):
-        async with ClientSession(read, write) as session:
-            # Initialize the connection
-            await session.initialize()
-            tools = await load_mcp_tools(session)
-            memory = MemorySaver()
-            agent = create_react_agent(llm, tools, checkpointer=memory)
-            config = {"configurable": {"thread_id": str(uuid.uuid4())}}
-            response = await agent.ainvoke({"messages": request.query}, config)
-            return {"response": response["messages"][-1].content}
+        async with streamablehttp_client("http://34.201.154.119:8000/mcp") as (read, write, _):
+        #async with streamablehttp_client("http://localhost:8000/mcp") as (read, write, _):
+            async with ClientSession(read, write) as session:
+                # Initialize the connection
+                await session.initialize()
+                tools = await load_mcp_tools(session)
+                memory = MemorySaver()
+                agent = create_react_agent(llm, tools, checkpointer=memory, max_iterations=10,trim_intermediate_steps=True) # This is crucial
+                config = {"configurable": {"thread_id": str(uuid.uuid4()), "max_messages": 10}}
+                response = await agent.ainvoke({"messages": request.query}, config)
+                return {"response": response["messages"][-1].content}
