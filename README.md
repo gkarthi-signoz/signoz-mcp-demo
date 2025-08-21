@@ -28,6 +28,8 @@ OPENAI_API_KEY=<your-openai-api-key>
 SIGNOZ_INGESTION_KEY=<your-signoz-ingestion-key>
 ```
 
+Follow the [README](https://github.com/DrDroidLab/signoz-mcp-server/blob/master/README.md) in the following [repo](https://github.com/DrDroidLab/signoz-mcp-server) to setup and deploy the signoz mcp server locally (default localhost port 8000).
+
 Run the fastapi backend:
 ```bash
 uvicorn main:app --reload --port 8001
