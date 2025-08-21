@@ -64,4 +64,5 @@ Go to **Import JSON**
 Import the **langchain-mcp-dashboard.json** file from the repo.
 
 Your dashboard should now be imported and look something like this:
-<img width="1450" height="761" alt="Screenshot 2025-08-21 at 11 22 12 AM" src="https://github.com/user-attachments/assets/8c84888e-10e5-4b28-ac2a-5673146e883c" />
+<img width="1446" height="752" alt="Screenshot 2025-08-21 at 11 37 25 AM" src="https://github.com/user-attachments/assets/48f3d8ef-bfe0-4a85-a87d-20923b15bb58" />
+
